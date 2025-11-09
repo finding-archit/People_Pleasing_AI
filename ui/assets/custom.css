@@ -1,0 +1,51 @@
+body {
+    background: linear-gradient(135deg, #d9afd9 0%, #97d9e1 100%);
+}
+.bubble {
+    border-radius: 28px;
+    box-shadow: 0 8px 32px rgba(80,80,160,0.12);
+    padding: 18px 22px;
+    margin: 28px 0;
+    display: inline-block;
+    background: #fff;
+    color: #232323;
+    font-size: 1.2em;
+    min-width: 40%;
+    max-width: 95%;
+}
+.response-bubble {
+    background: linear-gradient(100deg, #6dd5ed 20%, #2193b0 80%);
+    color: #fff;
+    font-weight: 500;
+    border: 2.5px solid #43cea2;
+}
+.stTextArea textarea {
+    border-radius: 10px;
+    border: 1.5px solid #57a773;
+    background: #fff !important;
+    font-size: 1.08em;
+    color: #222 !important;
+}
+.stButton button {
+    background: linear-gradient(90deg,#43cea2 0%, #185a9d 100%);
+    color: #fff;
+    border-radius: 7px;
+    border: none;
+    padding: 6px 18px;
+    font-size: 1.17em;
+    margin: 2px 0 6px 0;
+    box-shadow: 0 2px 16px rgba(33,147,176,.07);
+    cursor:pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.stButton button:hover {
+    background: linear-gradient(90deg,#185a9d 0%, #43cea2 100%);
+}
+hr { border:none; border-bottom:2px solid #2193b0; margin:20px 0; }
+
+/* Hide Streamlit's deploy button and toolbar */
+[data-testid="stToolbar"] {
+    display: none !important;
+}
