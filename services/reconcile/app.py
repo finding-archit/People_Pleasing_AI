@@ -35,13 +35,30 @@ def compose_prompt(ctx: ReconcileContext): #construct and loads into prompt
 ---
 
 Your task:
-1. Frame each user's persona based on their sentiment, intent, stance, and valence above. Be direct and realistic about their emotional state and motivations.
-2. Acknowledge both viewpoints, explaining the justification and reasoning behind each user's position.
-3. Propose a single balanced response that sheds light on each perspective, highlighting where compromise is necessary.
-4. Do not sugarcoat or be excessively kind—be firm, fair, and direct. Use straightforward language.
-5. Keep your entire response to 100 words or fewer.
 
-Focus on actionable outcomes and necessary trade-offs, not empty reassurances.
+1. Infer a concise persona for User A and User B.
+2. Then write one message to User A and one message to User B.
+
+Format your final answer EXACTLY like this, in this order:
+
+**User A Persona:**
+<1–2 sentences about A’s motivations, values, and emotional state.>
+
+**User B Persona:**
+<1–2 sentences about B’s motivations, values, and emotional state.>
+
+**Message to User A:**
+<2–4 sentences, speaking to A as "you". Explain B’s perspective in A’s terms, ask A to sacrifice/soften at least one part of their stance, and tell A one important thing they should keep.>
+
+**Message to User B:**
+<2–4 sentences, speaking to B as "you". Explain A’s perspective in B’s terms, ask B to sacrifice/soften at least one part of their stance, and tell B one important thing they should keep.>
+
+Rules:
+- Keep total output under 180 words.
+- Do not add any other headings, bullets, or text.
+- Be firm, fair, and realistic—not overly sweet.
+
+
 """
     return prompt
 
@@ -51,7 +68,7 @@ def call_mistral_llm(prompt: str, model="mistral"): #request to locally running 
         json={
             "model": model,
             "prompt": prompt,
-            "stream": False
+            "stream": False #get the full ans in one go
         }
     )
     r.raise_for_status()
