@@ -1,14 +1,18 @@
 import streamlit as st
 import requests #http requests to agents
 
+
 # Load Custom CSS
 with open("assets/custom.css") as css_file:
     st.markdown(f"<style>{css_file.read()}</style>", unsafe_allow_html=True)
 
+
 st.set_page_config(page_title="People Pleasing AI - Conflict Resolution", page_icon="💬", layout="centered")
+
 
 # Center-aligned title
 st.markdown("<h1 style='text-align:center;'>People Pleasing AI – Conflict Resolution</h1>", unsafe_allow_html=True)
+
 
 with st.form(key="inputs"):
     col1, col2 = st.columns(2)
@@ -18,14 +22,26 @@ with st.form(key="inputs"):
         user_B = st.text_area("User B says...", height=60, key='userB')
     submit = st.form_submit_button("✨ Generate AI Response")
 
+
 if submit and user_A and user_B:
     payload = {"user_A_text": user_A, "user_B_text": user_B}
     with st.spinner('Analyzing and generating response...'):
-        persp = requests.post("http://localhost:8001/extract", json=payload, timeout=45).json() #requests
-        sent = requests.post("http://localhost:8002/analyze", json=payload, timeout=45).json()
+        persp = requests.post("http://localhost:8001/extract", json=payload, timeout=45).json() #perspective requests
+        sent = requests.post("http://localhost:8002/analyze", json=payload, timeout=45).json() #sentiment requests
         reconcile = {"perspectives": persp, "sentiments": sent}
-        reply = requests.post("http://localhost:8003/reconcile", json=reconcile, timeout=60).json()
+        reply = requests.post("http://localhost:8003/reconcile", json=reconcile, timeout=60).json() #reconcile request
         final_reply = reply.get('reply', '')
+
+        # ---- NEW: call safety agent on the final reply ----
+        safety_result = {}
+        if final_reply:
+            safety_payload = {"reply_text": final_reply}
+            safety_resp = requests.post("http://localhost:8004/safety", json=safety_payload, timeout=30)
+            try:
+                safety_result = safety_resp.json()
+            except Exception:
+                safety_result = {"approved": False, "reason": "Safety check failed", "scores": {}}
+        # ---------------------------------------------------
 
     # Extract perspective and sentiment data
     ua_persp = persp["user_A_perspectives"][0]
@@ -53,6 +69,7 @@ if submit and user_A and user_B:
     </div>
     """, unsafe_allow_html=True)
 
+
     # Professional response tray
     st.markdown(f"""
     <div style="
@@ -76,6 +93,22 @@ if submit and user_A and user_B:
         ">{final_reply}</div>
     </div>
     """, unsafe_allow_html=True)
+
+    # ---- NEW: show safety result ----
+    if safety_result:
+        if safety_result.get("approved", False):
+            st.success("✅ Safety check passed: response is approved.")
+        else:
+            st.error("⚠️ Safety check flagged this response.")
+            reason = safety_result.get("reason")
+            if reason:
+                st.write(reason)
+            scores = safety_result.get("scores", {})
+            if scores:
+                st.write("Safety scores:")
+                st.json(scores)
+    # ---------------------------------
+
 
     # Professional feedback section
     st.markdown("<hr style='margin:36px 0 24px 0;'>", unsafe_allow_html=True)
@@ -106,5 +139,6 @@ if submit and user_A and user_B:
         feedback.append("User B: Rejected")
     if feedback:
         st.info("📊 " + " | ".join(feedback))
+
 
 st.markdown('<div style="text-align:center;color:#777;margin-top:2em;">Designed by Archit Gupta, Rounaq Moin, Gunda Rama Praneetha 💡</div>', unsafe_allow_html=True)

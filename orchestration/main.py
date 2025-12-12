@@ -2,8 +2,10 @@ import requests
 import csv #save and load pipeline results
 import os
 
+
 def print_markdown_output(user_A, user_B,
                          result_persp, result_sent, reply_text, result_safety):
+
 
     print("# 🤖 People-Pleasing AI: Full Pipeline Analysis\n")
     print("## 1. User Statements\n")
@@ -13,6 +15,7 @@ def print_markdown_output(user_A, user_B,
     print(f"| User B | {user_B} |")
     print("\n---")
 
+
     print("## 2. Stance Detected by Perspective Agent\n")
     print("| User   | Stance   | Key Claim |")
     print("|--------|----------|---------------------------------------------------------------------|")
@@ -21,10 +24,12 @@ def print_markdown_output(user_A, user_B,
     for p in result_persp["user_B_perspectives"]:
         print(f"| User B | {p['stance']} | {p['key_claims'][0]} |")
 
+
     print("\n### 📊 Stance Summary")
     print(f"- User A stance: **{result_persp['user_A_perspectives'][0]['stance']}**")
     print(f"- User B stance: **{result_persp['user_B_perspectives'][0]['stance']}**")
     print("---")
+
 
     print("## 3. Sentiment & Intent Analysis\n")
     print("| User   | Valence | Top Intent | Main Emotional Scores |")
@@ -36,12 +41,14 @@ def print_markdown_output(user_A, user_B,
     ub_emotions = ", ".join(f"{k}: {v:.2f}" for k, v in ub["emotion_scores"].items())
     print(f"| User B | {ub['valence']:.3f} | {ub['intent']} | {ub_emotions} |")
 
+
     print("\n### 🧠 Sentiment Notes:")
     print("- User A strongest emotions: " +
           ", ".join([f"{k} ({ua['emotion_scores'][k]:.2f})" for k in ua['emotion_scores']]))
     print("- User B strongest emotions: " +
           ", ".join([f"{k} ({ub['emotion_scores'][k]:.2f})" for k in ub['emotion_scores']]))
     print("---")
+
 
     print("## 4. AI-Reconciled Response\n")
     print("```")
@@ -51,8 +58,9 @@ def print_markdown_output(user_A, user_B,
     print("- Moderator LLM tries to identify common ground, acknowledges each user's feelings, and invites constructive follow-up.")
     print("---")
 
+
     print("## 5. Safety Moderation Results\n")
-    print("| Category          | Score | Threshold | Flagged |")
+    print("| Category           | Score | Threshold | Flagged |")
     print("|-------------------|-------|-----------|--------|")
     scores = result_safety.get('scores', {})
     threshold = 0.4
@@ -64,10 +72,12 @@ def print_markdown_output(user_A, user_B,
         print(f"**Note:** {result_safety['reason']}")
     print("---")
 
+
     print("## 🧩 Summary & Analysis\n")
     print("- Each agent output above includes key analytics and highlights.")
     print("- Use flagged safety categories and valence/emotions for deeper user and system studies.")
     print("- You can easily export this Markdown or automate reporting across batches.\n") #prints everything beautifully
+
 
 def save_results_to_csv(user_A, user_B, result_persp, result_sent, reply_text, result_safety, csv_filename="pipeline_results.csv"):
     fieldnames = [ #saves as fields into a csv
@@ -79,6 +89,7 @@ def save_results_to_csv(user_A, user_B, result_persp, result_sent, reply_text, r
         "reconciled_response", "approved",
         "reason", "toxicity", "severe_toxicity", "obscene", "threat", "insult", "identity_attack"
     ]
+
 
     row = {
         "user_A_text": user_A,
@@ -99,6 +110,7 @@ def save_results_to_csv(user_A, user_B, result_persp, result_sent, reply_text, r
     for col in ["toxicity", "severe_toxicity", "obscene", "threat", "insult", "identity_attack"]:
         row[col] = scores.get(col)
 
+
     write_header = not os.path.exists(csv_filename)
     with open(csv_filename, mode="a", newline='', encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -107,25 +119,30 @@ def save_results_to_csv(user_A, user_B, result_persp, result_sent, reply_text, r
         writer.writerow(row)
     print(f"Results saved to {csv_filename}")
 
+
 if __name__ == "__main__": #connects the agents to conduct http requests to different agents via uvicorn apps
-    # Input (replace with user scenario/hook as needed)
-    user_A = "Rounaq finds it boring to sit and talk to people, because he thinks its dumb."
-    user_B = "Tanay is always keen to sit and talk to people, because he thinks it is wholesome."
+    # Input 
+    user_A = "Virat Kohli is the best."
+    user_B = "Virat Kohli is the worst."
     payload = {"user_A_text": user_A, "user_B_text": user_B}
+
 
     # Perspective agent
     persp_resp = requests.post("http://localhost:8001/extract", json=payload)
     result_persp = persp_resp.json() #makes post for stances and claims
 
+
     # Sentiment agent
     sent_resp = requests.post("http://localhost:8002/analyze", json=payload)
     result_sent = sent_resp.json() #post to sent int
+
 
     # Reconciliation agent
     reconcile_payload = {"perspectives": result_persp, "sentiments": result_sent}
     reconcile_resp = requests.post("http://localhost:8003/reconcile", json=reconcile_payload)
     result_reconcile = reconcile_resp.json() #post to form response
     reply_text = result_reconcile.get('reply_text') or result_reconcile.get('reply')
+
 
     # Safety agent and robust output
     if not reply_text:
@@ -141,3 +158,5 @@ if __name__ == "__main__": #connects the agents to conduct http requests to diff
             result_safety = {"approved": False, "reason": "No valid JSON from safety agent"}
         print_markdown_output(user_A, user_B, result_persp, result_sent, reply_text, result_safety)
         save_results_to_csv(user_A, user_B, result_persp, result_sent, reply_text, result_safety)
+
+        input("\nPress Enter to close...")  # <--- keeps the window open at the end
